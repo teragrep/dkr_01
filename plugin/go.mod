@@ -1,4 +1,4 @@
-module dkr_01
+module github.com/teragrep/dkr_01/plugin
 
 go 1.19
 
