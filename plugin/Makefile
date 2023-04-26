@@ -1,5 +1,5 @@
 # Plugin parameters
-PLUGIN_NAME=teragrep/relp-docker-plugin
+PLUGIN_NAME=teragrep/dkr_01
 PLUGIN_TAG=v1
 
 all: clean build-image create-plugin

@@ -6,7 +6,7 @@ x-logging:
     relpPort: "1601"
     #max-size: '12m'
     #max-file: '5'
-  driver: teragrep/relp-docker-plugin:v1
+  driver: teragrep/dkr_01:v1
 services:
   test:
     build:

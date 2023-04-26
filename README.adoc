@@ -20,7 +20,7 @@ Will make the plugin and enable it
 
 [,bash]
 ----
-$ docker run --log-driver:teragrep/relp-docker-plugin:v1 \
+$ docker run --log-driver:teragrep/dkr_01:v1 \
     --log-opt relpHostname=1.2.3.4 \
     --log-opt relpPort=1234 \
     --log-opt relpTls=false

@@ -32,7 +32,7 @@ func main() {
 
 	relpPluginHandler := sdk.NewHandler(`{"Implements": ["LogDriver"]}`)
 	handlers(&relpPluginHandler, newDriver())
-	if err := relpPluginHandler.ServeUnix("relplogdriver", 0); err != nil {
+	if err := relpPluginHandler.ServeUnix("dkr_01", 0); err != nil {
 		panic(err)
 	}
 }

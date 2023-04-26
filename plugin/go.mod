@@ -1,4 +1,4 @@
-module relp-docker-plugin
+module dkr_01
 
 go 1.19
 

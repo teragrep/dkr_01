@@ -1,10 +1,10 @@
 {
   "Description": "RELP Log Driver Plugin",
   "Documentation": "TBD",
-  "Entrypoint": ["/usr/bin/relp-docker-plugin"],
+  "Entrypoint": ["/usr/bin/dkr_01"],
   "Interface": {
       "Types": ["docker.logdriver/1.0"],
-      "Socket": "relplogdriver.sock"
+      "Socket": "dkr_01.sock"
   },
   "Network": {
     "Type": "host"

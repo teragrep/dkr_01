@@ -6,7 +6,7 @@ const (
 	RELP_HOSTNAME_OPT = "relpHostname"
 	RELP_PORT_OPT     = "relpPort"
 	RELP_TLS_OPT      = "relpTls"
-	DRIVER_NAME       = "teragrep-relp-docker-plugin"
+	DRIVER_NAME       = "teragrep-dkr_01"
 )
 
 func ValidateLogOpts(cfg map[string]string) error {
