@@ -8,6 +8,19 @@ import (
 
 var msgId = 0
 
+type SyslogPriority string
+
+const (
+	PRIO_EMERGENCY SyslogPriority = "0"
+	PRIO_ALERT     SyslogPriority = "1"
+	PRIO_CRITICAL  SyslogPriority = "2"
+	PRIO_ERROR     SyslogPriority = "3"
+	PRIO_WARNING   SyslogPriority = "4"
+	PRIO_NOTICE    SyslogPriority = "5"
+	PRIO_INFO      SyslogPriority = "6"
+	PRIO_DEBUG     SyslogPriority = "7"
+)
+
 type SyslogMessage struct {
 	Header         *SyslogHeader
 	StructuredData *SyslogStructuredData
@@ -45,12 +58,10 @@ func InitializeSyslogMessage() *SyslogMessage {
 		hostname = "localhost"
 	}
 
-	msgId++
-
 	sysm.Header = &SyslogHeader{
 		PRI:       "<0>",
 		VERSION:   "0",
-		TIMESTAMP: time.Now().UTC().String(),
+		TIMESTAMP: time.Now().Format(time.RFC3339),
 		HOSTNAME:  hostname,
 		APPNAME:   "teragrep",
 		PROCID:    "0",
@@ -60,11 +71,37 @@ func InitializeSyslogMessage() *SyslogMessage {
 	sysm.StructuredData = nil
 	sysm.Message = nil
 
+	msgId++
+
 	return sysm
 }
 
 func (sysm *SyslogMessage) AddMessagePart(msg []byte) {
 	sysm.Message = &SyslogInternalMessage{Msg: &msg}
+}
+
+func (sysm *SyslogMessage) SetPriority(prio SyslogPriority) {
+	if sysm.Header != nil {
+		sysm.Header.PRI = fmt.Sprintf("<%s>", prio)
+	}
+}
+
+func (sysm *SyslogMessage) SetVersion(ver string) {
+	if sysm.Header != nil {
+		sysm.Header.VERSION = ver
+	}
+}
+
+func (sysm *SyslogMessage) SetProcId(id string) {
+	if sysm.Header != nil {
+		sysm.Header.PROCID = id
+	}
+}
+
+func (sysm *SyslogMessage) SetTimeNano(nano int64) {
+	if sysm.Header != nil {
+		sysm.Header.TIMESTAMP = time.Unix(0, nano).Format(time.RFC3339)
+	}
 }
 
 func (sysm *SyslogMessage) Bytes() *[]byte {

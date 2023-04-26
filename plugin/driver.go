@@ -177,6 +177,9 @@ func consumeLog(lg *logPair) {
 		// make syslog message format
 		syslogMsg := InitializeSyslogMessage()
 		syslogMsg.AddMessagePart(buf.Line)
+		syslogMsg.SetProcId(lg.info.ContainerID)
+		syslogMsg.SetTimeNano(buf.TimeNano)
+		syslogMsg.SetPriority(PRIO_WARNING)
 
 		batch.Insert(*syslogMsg.Bytes()) // was buf.line
 
