@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"time"
@@ -105,20 +106,37 @@ func (sysm *SyslogMessage) SetTimeNano(nano int64) {
 }
 
 func (sysm *SyslogMessage) Bytes() *[]byte {
-	msgStr := ""
+	buf := bytes.NewBuffer(make([]byte, 0, 512))
 
 	// header
-	msgStr += sysm.Header.PRI + " " + sysm.Header.VERSION + " " + sysm.Header.TIMESTAMP + " " + sysm.Header.HOSTNAME + " " + sysm.Header.APPNAME + " " + sysm.Header.PROCID + " " + sysm.Header.MSGID
+	buf.WriteString(sysm.Header.PRI)
+	buf.WriteByte(' ')
+	buf.WriteString(sysm.Header.VERSION)
+	buf.WriteByte(' ')
+	buf.WriteString(sysm.Header.TIMESTAMP)
+	buf.WriteByte(' ')
+	buf.WriteString(sysm.Header.HOSTNAME)
+	buf.WriteByte(' ')
+	buf.WriteString(sysm.Header.APPNAME)
+	buf.WriteByte(' ')
+	buf.WriteString(sysm.Header.PROCID)
+	buf.WriteByte(' ')
+	buf.WriteString(sysm.Header.MSGID)
+
 	// structuredData
 	if sysm.StructuredData != nil {
-		msgStr += " " + sysm.StructuredData.SdElement.SdId + "=" + sysm.StructuredData.SdElement.SdParam
+		buf.WriteByte(' ')
+		buf.WriteString(sysm.StructuredData.SdElement.SdId)
+		buf.WriteByte('=')
+		buf.WriteString(sysm.StructuredData.SdElement.SdParam)
 	}
+
 	// msg
 	if sysm.Message != nil {
-		msgStr += " " + string(*sysm.Message.Msg)
+		buf.WriteByte(' ')
+		buf.Write(*sysm.Message.Msg)
 	}
 
-	ret := []byte(msgStr)
-
+	ret := buf.Bytes()
 	return &ret
 }
