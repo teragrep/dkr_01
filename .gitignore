@@ -1,0 +1,5 @@
+# ignore ide files
+.idea/
+# ignore plugin build
+plugin-build/
+plugin/plugin-build

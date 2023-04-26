@@ -1,0 +1,12 @@
+{
+  "Description": "RELP Log Driver Plugin",
+  "Documentation": "TBD",
+  "Entrypoint": ["/usr/bin/relp-docker-plugin"],
+  "Interface": {
+      "Types": ["docker.logdriver/1.0"],
+      "Socket": "relplogdriver.sock"
+  },
+  "Network": {
+    "Type": "host"
+  }
+}

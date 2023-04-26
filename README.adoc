@@ -1,0 +1,28 @@
+= dkr_01
+
+Docker Logging Driver Plugin. Sends the Docker container's logs to the specified RELP server.
+
+
+== Log opts
+
+* relpHostname = ip address
+* relpPort = port number
+* relpTls = "true" or "false"
+
+== Building the plugin
+
+In git root:
+[,bash]
+----
+$ cd plugin && chmod +rwx ./plugin-build && make all
+----
+Will make the plugin and enable it
+
+[,bash]
+----
+$ docker run --log-driver:teragrep/relp-docker-plugin:v1 \
+    --log-opt relpHostname=1.2.3.4 \
+    --log-opt relpPort=1234 \
+    --log-opt relpTls=false
+----
+To run the specified container using this log driver.

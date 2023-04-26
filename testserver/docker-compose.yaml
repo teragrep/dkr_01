@@ -1,0 +1,24 @@
+version: "3.9"
+x-logging:
+  &default-logging
+  options:
+    relpHostname: "127.0.0.1"
+    relpPort: "1601"
+    #max-size: '12m'
+    #max-file: '5'
+  driver: teragrep/relp-docker-plugin:v1
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      #ports:
+      # - "9003:9003"
+      # - "1601:1601" #this is for relp
+    logging: *default-logging
+    environment:
+      HTTP_PORT: 9003
+      #RELP_HOSTNAME: "127.0.0.1"
+    extra_hosts: #this is for relp
+      - "host.docker.internal:host-gateway"
+    network_mode: "host"
