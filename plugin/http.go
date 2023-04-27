@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/docker/docker/daemon/logger"
-	"github.com/docker/go-plugins-helpers/sdk"
+	"github.com/teragrep/dkr_02/sdk"
 	"io"
 	"net/http"
 	"os"

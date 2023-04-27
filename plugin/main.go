@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/docker/go-plugins-helpers/sdk"
 	"github.com/sirupsen/logrus"
+	"github.com/teragrep/dkr_02/sdk"
 	"log"
 	"os"
 )
