@@ -1,0 +1,10 @@
+#golang
+FROM golang:1.19
+
+#set destination for copy
+WORKDIR /relpapp
+COPY / ./
+RUN go get
+RUN CGO_ENABLED=0 GOOS=linux go build -o /usr/bin/dkr_01
+EXPOSE 1601
+#CMD ["/usr/bin/dkr_01"]

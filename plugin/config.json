@@ -1,0 +1,12 @@
+{
+  "Description": "RELP Log Driver Plugin",
+  "Documentation": "github.com/teragrep/dkr_01",
+  "Entrypoint": ["/usr/bin/dkr_01"],
+  "Interface": {
+      "Types": ["docker.logdriver/1.0"],
+      "Socket": "dkr_01.sock"
+  },
+  "Network": {
+    "Type": "host"
+  }
+}

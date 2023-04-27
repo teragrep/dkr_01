@@ -1,0 +1,6 @@
+# ignore ide files
+.idea/
+dkr_01.iml
+# ignore plugin build
+plugin-build/
+plugin/plugin-build

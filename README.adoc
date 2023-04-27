@@ -1,0 +1,51 @@
+= dkr_01
+
+Docker Logging Driver Plugin. Sends the Docker container's logs to the specified RELP server.
+
+
+== Logging options
+These can be modified via the `--log-opt KEY=VALUE` command-line argument when using `docker run`.
+
+* relpHostname = ip address
+* relpPort = port number
+* relpTls = "true" or "false"
+
+== Building the plugin
+
+In git root, run:
+[,bash]
+----
+$ cd plugin && chmod +rwx ./plugin-build && make all
+----
+Will make the plugin and enable it. You can check if it was successful with the `docker plugin ls` command.
+The plugin's logs can be accessed from the `/run/docker/plugins/<id>/` folder.
+
+== Running the plugin with a container
+
+To attach the log driver to a container, run the container with the `--log-driver:teragrep/dkr_01:v1` parameter.
+[,bash]
+----
+$ docker run --log-driver:teragrep/dkr_01:v1 \
+    --log-opt relpHostname=1.2.3.4 \
+    --log-opt relpPort=1234 \
+    --log-opt relpTls=false
+----
+
+If using the `docker-compose` command, you can customize the `docker-compose.yaml` to contain the
+`options`.
+
+[,yaml]
+----
+x-logging:
+    &default-logging
+    options:
+        relpHostname: "1.2.3.4"
+        relpPort: "1601"
+    driver: teragrep/dkr_01:v1
+services:
+    test:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        logging: *default-logging
+----
