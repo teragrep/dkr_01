@@ -43,6 +43,7 @@ type logPair struct {
 	maxRetries   int
 	hostname     string
 	appName      string
+	tag          string
 }
 
 func (lg *logPair) Close() {
@@ -109,14 +110,20 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 
 	customHostname := ""
 	customAppName := ""
-	v, ok = logCtx.Config[SYSLOG_HOSTNAME]
+	customTag := ""
+	v, ok = logCtx.Config[SYSLOG_HOSTNAME_OPT]
 	if ok {
 		customHostname = v
 	}
 
-	v, ok = logCtx.Config[SYSLOG_APPNAME]
+	v, ok = logCtx.Config[SYSLOG_APPNAME_OPT]
 	if ok {
 		customAppName = v
+	}
+
+	v, ok = logCtx.Config[TAG_OPT]
+	if ok {
+		customTag = v
 	}
 
 	lf := &logPair{
@@ -128,6 +135,7 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 		connected:    false,
 		hostname:     customHostname,
 		appName:      customAppName,
+		tag:          customTag,
 	}
 
 	// relp connection for log pair
@@ -223,12 +231,47 @@ func consumeLog(lg *logPair) {
 		syslogMsg.SetPriority(4)
 		syslogMsg.SetVersion(1)
 
+		// hostname
 		if lg.hostname != "" {
 			syslogMsg.SetHostname(lg.hostname)
+		} else {
+			name, err := os.Hostname()
+			if err != nil {
+				syslogMsg.SetHostname("localhost")
+			} else {
+				syslogMsg.SetHostname(name)
+			}
 		}
 
+		// app name
 		if lg.appName != "" {
 			syslogMsg.SetAppname(lg.appName)
+		} else {
+			syslogMsg.SetAppname("teragrep")
+		}
+
+		// custom log tags
+		if lg.tag != "" {
+			/*
+				{{.ID}} - first 12 chars of container ID
+				{{.FullID}} - all chars of container ID
+				{{.Name}} - name of container
+				{{.ImageID}} - first 12 chars of container image ID
+				{{.ImageFullID}} - all chars of container image ID
+				{{.ImageName}} - name of container image
+				{{.DaemonName}} - name of the docker program
+			*/
+
+			customLogTag := lg.tag
+			customLogTag = strings.ReplaceAll(customLogTag, "{{.ID}}", lg.info.ContainerID[0:12])
+			customLogTag = strings.ReplaceAll(customLogTag, "{{.FullID}}", lg.info.ContainerID)
+			customLogTag = strings.ReplaceAll(customLogTag, "{{.Name}}", lg.info.ContainerName)
+			customLogTag = strings.ReplaceAll(customLogTag, "{{.ImageID}}", lg.info.ContainerImageID[0:12])
+			customLogTag = strings.ReplaceAll(customLogTag, "{{.ImageFullID}}", lg.info.ContainerImageID)
+			customLogTag = strings.ReplaceAll(customLogTag, "{{.ImageName}}", lg.info.ContainerImageName)
+			customLogTag = strings.ReplaceAll(customLogTag, "{{.DaemonName}}", lg.info.DaemonName)
+
+			syslogMsg.SetProcID(customLogTag)
 		}
 
 		str, err := syslogMsg.String()
