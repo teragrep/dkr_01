@@ -8,6 +8,7 @@ import (
 	"github.com/docker/docker/api/types/plugins/logdriver"
 	"github.com/docker/docker/daemon/logger"
 	protoio "github.com/gogo/protobuf/io"
+	"github.com/observiq/go-syslog/rfc5424"
 	"github.com/pkg/errors"
 	"github.com/teragrep/rlp_05/pkg/RelpBatch"
 	"github.com/teragrep/rlp_05/pkg/RelpConnection"
@@ -215,21 +216,27 @@ func consumeLog(lg *logPair) {
 		batch.Init()
 
 		// make syslog message format
-		syslogMsg := InitializeSyslogMessage()
-		syslogMsg.AddMessagePart(buf.Line)
-		syslogMsg.SetProcId(lg.info.ContainerID)
-		syslogMsg.SetTimeNano(buf.TimeNano)
-		syslogMsg.SetPriority(PRIO_WARNING)
+		syslogMsg := &rfc5424.SyslogMessage{}
+		syslogMsg.SetMessage(string(buf.Line))
+		syslogMsg.SetProcID(lg.info.ContainerID)
+		syslogMsg.SetTimestamp(time.Unix(0, buf.TimeNano).Format(time.RFC3339))
+		syslogMsg.SetPriority(4)
+		syslogMsg.SetVersion(1)
 
 		if lg.hostname != "" {
 			syslogMsg.SetHostname(lg.hostname)
 		}
 
 		if lg.appName != "" {
-			syslogMsg.SetAppName(lg.appName)
+			syslogMsg.SetAppname(lg.appName)
 		}
 
-		batch.Insert(*syslogMsg.Bytes()) // was buf.line
+		str, err := syslogMsg.String()
+		if err != nil {
+			// this should not really happen, meaning the message is malformed
+			panic("could not create syslog message: " + err.Error())
+		}
+		batch.Insert([]byte(str))
 
 		// send and verify batch
 		for notDone := true; notDone; {
