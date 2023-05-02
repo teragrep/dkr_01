@@ -40,6 +40,8 @@ type logPair struct {
 	connected    bool
 	tlsMode      bool
 	maxRetries   int
+	hostname     string
+	appName      string
 }
 
 func (lg *logPair) Close() {
@@ -104,6 +106,18 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 		}
 	}
 
+	customHostname := ""
+	customAppName := ""
+	v, ok = logCtx.Config[SYSLOG_HOSTNAME]
+	if ok {
+		customHostname = v
+	}
+
+	v, ok = logCtx.Config[SYSLOG_APPNAME]
+	if ok {
+		customAppName = v
+	}
+
 	lf := &logPair{
 		stream:       f,
 		info:         logCtx,
@@ -111,6 +125,8 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 		relpPort:     d.relpPort,
 		tlsMode:      tlsMode,
 		connected:    false,
+		hostname:     customHostname,
+		appName:      customAppName,
 	}
 
 	// relp connection for log pair
@@ -204,6 +220,14 @@ func consumeLog(lg *logPair) {
 		syslogMsg.SetProcId(lg.info.ContainerID)
 		syslogMsg.SetTimeNano(buf.TimeNano)
 		syslogMsg.SetPriority(PRIO_WARNING)
+
+		if lg.hostname != "" {
+			syslogMsg.SetHostname(lg.hostname)
+		}
+
+		if lg.appName != "" {
+			syslogMsg.SetAppName(lg.appName)
+		}
 
 		batch.Insert(*syslogMsg.Bytes()) // was buf.line
 

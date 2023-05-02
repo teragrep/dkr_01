@@ -105,6 +105,18 @@ func (sysm *SyslogMessage) SetTimeNano(nano int64) {
 	}
 }
 
+func (sysm *SyslogMessage) SetHostname(hn string) {
+	if sysm.Header != nil {
+		sysm.Header.HOSTNAME = hn
+	}
+}
+
+func (sysm *SyslogMessage) SetAppName(an string) {
+	if sysm.Header != nil {
+		sysm.Header.APPNAME = an
+	}
+}
+
 func (sysm *SyslogMessage) Bytes() *[]byte {
 	buf := bytes.NewBuffer(make([]byte, 0, 512))
 
