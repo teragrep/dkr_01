@@ -43,7 +43,7 @@ type logPair struct {
 	maxRetries   int
 	hostname     string
 	appName      string
-	tag          string
+	tags         string
 }
 
 func (lg *logPair) Close() {
@@ -110,7 +110,7 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 
 	customHostname := ""
 	customAppName := ""
-	customTag := ""
+	tags := "off"
 	v, ok = logCtx.Config[SYSLOG_HOSTNAME_OPT]
 	if ok {
 		customHostname = v
@@ -123,7 +123,9 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 
 	v, ok = logCtx.Config[TAG_OPT]
 	if ok {
-		customTag = v
+		if v == "off" || v == "minimal" || v == "full" {
+			tags = v
+		}
 	}
 
 	lf := &logPair{
@@ -135,7 +137,7 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 		connected:    false,
 		hostname:     customHostname,
 		appName:      customAppName,
-		tag:          customTag,
+		tags:         tags,
 	}
 
 	// relp connection for log pair
@@ -250,8 +252,8 @@ func consumeLog(lg *logPair) {
 			syslogMsg.SetAppname("teragrep")
 		}
 
-		// custom log tags
-		if lg.tag != "" {
+		// log tags
+		if lg.tags != "off" {
 			/*
 				{{.ID}} - first 12 chars of container ID
 				{{.FullID}} - all chars of container ID
@@ -262,30 +264,23 @@ func consumeLog(lg *logPair) {
 				{{.DaemonName}} - name of the docker program
 			*/
 
-			customLogTag := lg.tag
-			customLogTag = strings.ReplaceAll(customLogTag, "{{.ID}}", lg.info.ContainerID[0:12])
-			customLogTag = strings.ReplaceAll(customLogTag, "{{.FullID}}", lg.info.ContainerID)
-			customLogTag = strings.ReplaceAll(customLogTag, "{{.Name}}", lg.info.ContainerName)
-			customLogTag = strings.ReplaceAll(customLogTag, "{{.ImageID}}", lg.info.ContainerImageID[0:12])
-			customLogTag = strings.ReplaceAll(customLogTag, "{{.ImageFullID}}", lg.info.ContainerImageID)
-			customLogTag = strings.ReplaceAll(customLogTag, "{{.ImageName}}", lg.info.ContainerImageName)
-			customLogTag = strings.ReplaceAll(customLogTag, "{{.DaemonName}}", lg.info.DaemonName)
-
-			// check ascii codes
-			for _, char := range customLogTag {
-				if char < 33 || char > 126 {
-					fmt.Fprintln(os.Stderr, fmt.Sprintf("found invalid char in procId: %c (%d)", char, char))
-				}
-			}
-
-			// max length 128
-			if len(customLogTag) > 128 {
-				syslogMsg.SetProcID(customLogTag[0:128])
+			elementId := "dkr_01@48577"
+			if lg.tags == "minimal" {
+				syslogMsg.SetParameter(elementId, "ID", lg.info.ContainerID[:12])
+				syslogMsg.SetParameter(elementId, "ImageID", lg.info.ContainerImageID[:12])
+			} else if lg.tags == "full" {
+				syslogMsg.SetParameter(elementId, "FullID", lg.info.ContainerID)
+				syslogMsg.SetParameter(elementId, "ImageFullID", lg.info.ContainerImageID)
 			} else {
-				syslogMsg.SetProcID(customLogTag)
+				panic("invalid tags log opt: " + lg.tags)
 			}
+
+			syslogMsg.SetParameter(elementId, "Name", lg.info.ContainerName)
+			syslogMsg.SetParameter(elementId, "ImageName", lg.info.ContainerImageName)
+			syslogMsg.SetParameter(elementId, "DaemonName", lg.info.DaemonName)
 		}
 
+		// create final message and insert to batch
 		str, err := syslogMsg.String()
 		if err != nil {
 			// this should not really happen, meaning the message is malformed

@@ -10,7 +10,7 @@ const (
 	SYSLOG_APPNAME_OPT  = "syslogAppName"
 	DRIVER_NAME         = "teragrep-dkr_01"
 
-	TAG_OPT = "tag"
+	TAG_OPT = "tags"
 )
 
 func ValidateLogOpts(cfg map[string]string) error {
