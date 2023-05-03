@@ -271,7 +271,19 @@ func consumeLog(lg *logPair) {
 			customLogTag = strings.ReplaceAll(customLogTag, "{{.ImageName}}", lg.info.ContainerImageName)
 			customLogTag = strings.ReplaceAll(customLogTag, "{{.DaemonName}}", lg.info.DaemonName)
 
-			syslogMsg.SetProcID(customLogTag)
+			// check ascii codes
+			for _, char := range customLogTag {
+				if char < 33 || char > 126 {
+					fmt.Fprintln(os.Stderr, fmt.Sprintf("found invalid char in procId: %c (%d)", char, char))
+				}
+			}
+
+			// max length 128
+			if len(customLogTag) > 128 {
+				syslogMsg.SetProcID(customLogTag[0:128])
+			} else {
+				syslogMsg.SetProcID(customLogTag)
+			}
 		}
 
 		str, err := syslogMsg.String()
