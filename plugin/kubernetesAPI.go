@@ -8,8 +8,11 @@ import (
 )
 
 type KubernetesAPI struct {
-	clientKeyPath  string
-	clientCertPath string
+	clientKeyPath     string
+	clientCertPath    string
+	serverCertPath    string
+	clientAuthEnabled bool
+	serverAuthEnabled bool
 	// url should be in form of "https://localhost:10250"
 	url             string
 	data            *map[string]interface{}
@@ -37,7 +40,7 @@ func (kapi *KubernetesAPI) FetchData() error {
 	return nil
 }
 
-func (kapi *KubernetesAPI) GetContainerData(cntid string) error {
+func (kapi *KubernetesAPI) GetContainerData(cntId string) error {
 	// check if data has been fetched
 	if kapi.data == nil {
 		return errors.New("KubernetesAPI data was nil, please retrieve data with FetchData() first")
@@ -56,8 +59,10 @@ func (kapi *KubernetesAPI) GetContainerData(cntid string) error {
 		statusItem := statuses[i]
 		if statusItem != nil {
 			idString := statusItem.(map[string]interface{})["containerID"].(string)
-			if idString == cntid {
+			if idString == cntId {
+				// matching container id
 				kapi.containerStatus = statusItem.(map[string]interface{})
+				break
 			}
 		}
 	}

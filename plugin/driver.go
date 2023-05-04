@@ -33,17 +33,28 @@ type Driver struct {
 }
 
 type logPair struct {
-	stream       io.ReadCloser
-	info         logger.Info
-	relpConn     *RelpConnection.RelpConnection
-	relpHostname string
-	relpPort     int
-	connected    bool
-	tlsMode      bool
-	maxRetries   int
-	hostname     string
-	appName      string
-	tags         string
+	stream                                io.ReadCloser
+	info                                  logger.Info
+	relpConn                              *RelpConnection.RelpConnection
+	relpHostname                          string
+	relpPort                              int
+	connected                             bool
+	tlsMode                               bool
+	maxRetries                            int
+	hostname                              string
+	appName                               string
+	tags                                  string
+	kubernetesEnabled                     bool
+	kubeletUrl                            string
+	kubernetesClientAuthEnabled           bool
+	kubernetesClientAuthCertPath          string
+	kubernetesClientAuthKeyPath           string
+	kubernetesServerCertValidationEnabled bool
+	kubernetesServerCertPath              string
+	kubernetesMetadataRefreshEnabled      bool
+	kubernetesMetadataRefreshInterval     int64
+	lastKubernetesMetadataRefresh         int64
+	kapi                                  KubernetesAPI
 }
 
 func (lg *logPair) Close() {
@@ -128,16 +139,94 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 		}
 	}
 
+	// kubernetes metadata settings
+	kubernetesEnabled := false
+	v, ok = logCtx.Config[K8S_METADATA_EXTRACTION_ENABLED_OPT]
+	if ok {
+		if v == "true" || v == "True" || v == "TRUE" {
+			kubernetesEnabled = true
+		}
+	}
+
+	kubeletUrl := "https://localhost:10250"
+	v, ok = logCtx.Config[KUBELET_URL_OPT]
+	if ok {
+		kubeletUrl = v
+	}
+
+	kubernetesClientAuthEnabled := false
+	v, ok = logCtx.Config[K8S_CLIENT_AUTH_ENABLED_OPT]
+	if ok {
+		if v == "true" || v == "True" || v == "TRUE" {
+			kubernetesClientAuthEnabled = true
+		}
+	}
+
+	kubernetesClientAuthCertPath := ""
+	v, ok = logCtx.Config[K8S_CLIENT_AUTH_CERT_LOCATION_OPT]
+	if ok {
+		kubernetesClientAuthCertPath = v
+	}
+
+	kubernetesClientAuthKeyPath := ""
+	v, ok = logCtx.Config[K8S_CLIENT_AUTH_KEY_LOCATION_OPT]
+	if ok {
+		kubernetesClientAuthKeyPath = v
+	}
+
+	kubernetesServerCertValidationEnabled := false
+	v, ok = logCtx.Config[K8S_SERVER_CERT_VALIDATION_ENABLED_OPT]
+	if ok {
+		if v == "true" || v == "True" || v == "TRUE" {
+			kubernetesServerCertValidationEnabled = true
+		}
+	}
+
+	kubernetesServerCertPath := ""
+	v, ok = logCtx.Config[K8S_SERVER_CERT_LOCATION_OPT]
+	if ok {
+		kubernetesServerCertPath = v
+	}
+
+	kubernetesMetadataRefreshInterval := int64(0)
+	v, ok = logCtx.Config[K8S_METADATA_REFRESH_INTERVAL_OPT]
+	if ok {
+		convInt, convErr := strconv.ParseInt(v, 10, 64)
+		if convErr != nil {
+			fmt.Fprintln(os.Stderr, "Could not parse metadata refresh interval, defaults to 0")
+		} else {
+			kubernetesMetadataRefreshInterval = convInt
+		}
+	}
+
+	kubernetesMetadataRefreshEnabled := false
+	v, ok = logCtx.Config[K8S_METADATA_REFRESH_ENABLED_OPT]
+	if ok {
+		if v == "true" || v == "True" || v == "TRUE" {
+			kubernetesMetadataRefreshEnabled = true
+		}
+	}
+
 	lf := &logPair{
-		stream:       f,
-		info:         logCtx,
-		relpHostname: d.relpHostname,
-		relpPort:     d.relpPort,
-		tlsMode:      tlsMode,
-		connected:    false,
-		hostname:     customHostname,
-		appName:      customAppName,
-		tags:         tags,
+		stream:                                f,
+		info:                                  logCtx,
+		relpHostname:                          d.relpHostname,
+		relpPort:                              d.relpPort,
+		tlsMode:                               tlsMode,
+		connected:                             false,
+		hostname:                              customHostname,
+		appName:                               customAppName,
+		tags:                                  tags,
+		kubernetesEnabled:                     kubernetesEnabled,
+		kubeletUrl:                            kubeletUrl,
+		kubernetesClientAuthEnabled:           kubernetesClientAuthEnabled,
+		kubernetesClientAuthCertPath:          kubernetesClientAuthCertPath,
+		kubernetesClientAuthKeyPath:           kubernetesClientAuthKeyPath,
+		kubernetesServerCertValidationEnabled: kubernetesServerCertValidationEnabled,
+		kubernetesServerCertPath:              kubernetesServerCertPath,
+		kubernetesMetadataRefreshEnabled:      kubernetesMetadataRefreshEnabled,
+		kubernetesMetadataRefreshInterval:     kubernetesMetadataRefreshInterval,
+		lastKubernetesMetadataRefresh:         -1,
 	}
 
 	// relp connection for log pair
@@ -280,6 +369,32 @@ func consumeLog(lg *logPair) {
 			syslogMsg.SetParameter(elementId, "DaemonName", lg.info.DaemonName)
 		}
 
+		// kubernetes metadata
+		if lg.kubernetesEnabled {
+			if lg.kapi.metadata == nil {
+				lg.kapi = KubernetesAPI{
+					clientKeyPath:     lg.kubernetesClientAuthKeyPath,
+					clientCertPath:    lg.kubernetesClientAuthCertPath,
+					serverCertPath:    lg.kubernetesServerCertPath,
+					clientAuthEnabled: lg.kubernetesClientAuthEnabled,
+					serverAuthEnabled: lg.kubernetesServerCertValidationEnabled,
+					url:               lg.kubeletUrl,
+				}
+			}
+
+			if lg.lastKubernetesMetadataRefresh == -1 {
+				// first refresh ever
+				getKubernetesData(lg, syslogMsg)
+			} else if lg.kubernetesMetadataRefreshEnabled {
+				nowSecs := time.Now().Unix()
+				lastSecs := lg.lastKubernetesMetadataRefresh
+				if (nowSecs - lastSecs) >= lg.kubernetesMetadataRefreshInterval {
+					// need to refresh
+					getKubernetesData(lg, syslogMsg)
+				}
+			}
+		}
+
 		// create final message and insert to batch
 		str, err := syslogMsg.String()
 		if err != nil {
@@ -323,5 +438,33 @@ func retryRelpConnection(relpSess *RelpConnection.RelpConnection, hostname strin
 		relpSess.TearDown()
 		time.Sleep(1000 * time.Millisecond)
 		success, err = relpSess.Connect(hostname, port)
+	}
+}
+
+func getKubernetesData(lg *logPair, syslogMsg *rfc5424.SyslogMessage) {
+	kapiFetchErr := lg.kapi.FetchData()
+	if kapiFetchErr != nil {
+		fmt.Fprintln(os.Stderr, "Could not fetch kubernetes api data: "+kapiFetchErr.Error())
+	} else {
+		kapiContainerErr := lg.kapi.GetContainerData(lg.info.ContainerID)
+		if kapiContainerErr != nil {
+			fmt.Fprintln(os.Stderr, "Could not get container data: "+kapiContainerErr.Error())
+		} else {
+			// kubernetes api accessed successfully
+			// insert api data to structured data
+			elementId := "dkr_01_k8s@48577"
+			// metadata
+			syslogMsg.SetParameter(elementId,
+				"name", lg.kapi.metadata["name"])
+			syslogMsg.SetParameter(elementId,
+				"namespace", lg.kapi.metadata["namespace"])
+			syslogMsg.SetParameter(elementId,
+				"labels", lg.kapi.metadata["labels"])
+			syslogMsg.SetParameter(elementId,
+				"uid", lg.kapi.metadata["uid"])
+			syslogMsg.SetParameter(elementId,
+				"creationTimestamp", lg.kapi.metadata["creationTimestamp"])
+			// TODO: There is also kapi.containerData
+		}
 	}
 }
