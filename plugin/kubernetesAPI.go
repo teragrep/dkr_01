@@ -1,36 +1,75 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 )
 
 type KubernetesAPI struct {
-	clientKeyPath     string
-	clientCertPath    string
-	serverCertPath    string
-	clientAuthEnabled bool
-	serverAuthEnabled bool
-	// url should be in form of "https://localhost:10250"
-	url             string
-	data            *map[string]interface{}
-	metadata        map[string]string
-	containerStatus map[string]interface{}
+	clientKeyPath     string                  // used for tls.Certificate X509 cert
+	clientCertPath    string                  // used for tls.Certificate X509 key
+	serverCertPath    string                  // used for root CA cert
+	clientAuthEnabled bool                    // uses x509 cert/key
+	serverAuthEnabled bool                    // ca cert
+	url               string                  // url should be in form of "https://localhost:10250"
+	data              *map[string]interface{} // unmarshaled json response data
+	metadata          map[string]string       // extracted metadata from json response
+	containerStatus   map[string]interface{}  // extracted current container status json data
 }
 
 func (kapi *KubernetesAPI) FetchData() error {
-	resp, err := http.Get(kapi.url + "/pods")
+	client := &http.Client{}
+	tlsConfig := &tls.Config{}
+
+	// client certs
+	if kapi.clientAuthEnabled {
+		cert, err := tls.LoadX509KeyPair(kapi.clientCertPath, kapi.clientKeyPath)
+		if err != nil {
+			return err
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	// server (CA) certs
+	if kapi.serverAuthEnabled {
+		if _, err := os.Stat(kapi.serverCertPath); err == nil {
+			caCert, err := os.ReadFile(kapi.serverCertPath)
+			if err != nil {
+				return err
+			}
+			caCertPool := x509.NewCertPool()
+			caCertPool.AppendCertsFromPEM(caCert)
+
+			tlsConfig.RootCAs = caCertPool
+
+		} else {
+			panic("Server cert path pointed to a file that does not exist: '" + kapi.serverCertPath + "'")
+		}
+
+	}
+
+	// set tls config
+	client.Transport = &http.Transport{TLSClientConfig: tlsConfig}
+
+	// get '/pods'
+	resp, err := client.Get(fmt.Sprintf("%s/pods", kapi.url))
 	if err != nil {
 		return err
 	}
 
+	// read body of response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
+	// get json
 	var objMap map[string]interface{}
 	if err := json.Unmarshal(body, &objMap); err != nil {
 		return err
