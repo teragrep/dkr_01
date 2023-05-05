@@ -371,6 +371,9 @@ func consumeLog(lg *logPair) {
 
 		// kubernetes metadata
 		if lg.kubernetesEnabled {
+
+			// check if metadata nil, meaning API has not fetched anything before
+			// initialize api struct
 			if lg.kapi.metadata == nil {
 				lg.kapi = KubernetesAPI{
 					clientKeyPath:     lg.kubernetesClientAuthKeyPath,
@@ -383,15 +386,41 @@ func consumeLog(lg *logPair) {
 			}
 
 			if lg.lastKubernetesMetadataRefresh == -1 {
-				// first refresh ever
-				getKubernetesData(lg, syslogMsg)
+				// first refresh ever: get data and update last refresh time
+				err := getKubernetesData(lg)
+				if err == nil {
+					lg.lastKubernetesMetadataRefresh = time.Now().Unix()
+				}
+
 			} else if lg.kubernetesMetadataRefreshEnabled {
+				// only refresh after first refresh if it is enabled
 				nowSecs := time.Now().Unix()
 				lastSecs := lg.lastKubernetesMetadataRefresh
+				// check for interval
 				if (nowSecs - lastSecs) >= lg.kubernetesMetadataRefreshInterval {
-					// need to refresh
-					getKubernetesData(lg, syslogMsg)
+					// need to refresh and update last refresh time
+					err := getKubernetesData(lg)
+					if err == nil {
+						lg.lastKubernetesMetadataRefresh = time.Now().Unix()
+					}
 				}
+			}
+
+			// only add if metadata exists
+			if lg.kapi.metadata != nil {
+				// insert api data to structured data
+				elementId := "dkr_01_k8s@48577"
+				// metadata
+				syslogMsg.SetParameter(elementId,
+					"name", lg.kapi.metadata["name"])
+				syslogMsg.SetParameter(elementId,
+					"namespace", lg.kapi.metadata["namespace"])
+				syslogMsg.SetParameter(elementId,
+					"labels", lg.kapi.metadata["labels"])
+				syslogMsg.SetParameter(elementId,
+					"uid", lg.kapi.metadata["uid"])
+				syslogMsg.SetParameter(elementId,
+					"creationTimestamp", lg.kapi.metadata["creationTimestamp"])
 			}
 		}
 
@@ -441,30 +470,16 @@ func retryRelpConnection(relpSess *RelpConnection.RelpConnection, hostname strin
 	}
 }
 
-func getKubernetesData(lg *logPair, syslogMsg *rfc5424.SyslogMessage) {
+func getKubernetesData(lg *logPair) error {
 	kapiFetchErr := lg.kapi.FetchData()
 	if kapiFetchErr != nil {
-		fmt.Fprintln(os.Stderr, "Could not fetch kubernetes api data: "+kapiFetchErr.Error())
+		return kapiFetchErr
 	} else {
 		kapiContainerErr := lg.kapi.GetContainerData(lg.info.ContainerID)
 		if kapiContainerErr != nil {
-			fmt.Fprintln(os.Stderr, "Could not get container data: "+kapiContainerErr.Error())
+			return kapiContainerErr
 		} else {
-			// kubernetes api accessed successfully
-			// insert api data to structured data
-			elementId := "dkr_01_k8s@48577"
-			// metadata
-			syslogMsg.SetParameter(elementId,
-				"name", lg.kapi.metadata["name"])
-			syslogMsg.SetParameter(elementId,
-				"namespace", lg.kapi.metadata["namespace"])
-			syslogMsg.SetParameter(elementId,
-				"labels", lg.kapi.metadata["labels"])
-			syslogMsg.SetParameter(elementId,
-				"uid", lg.kapi.metadata["uid"])
-			syslogMsg.SetParameter(elementId,
-				"creationTimestamp", lg.kapi.metadata["creationTimestamp"])
-			// TODO: There is also kapi.containerData
+			return nil // success
 		}
 	}
 }
