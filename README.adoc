@@ -22,10 +22,10 @@ The plugin's logs can be accessed from the `/run/docker/plugins/<id>/` folder.
 
 == Running the plugin with a container
 
-To attach the log driver to a container, run the container with the `--log-driver:teragrep/dkr_01:v1` parameter.
+To attach the log driver to a container, run the container with the `--log-driver=teragrep/dkr_01:v1` parameter.
 [,bash]
 ----
-$ docker run --log-driver:teragrep/dkr_01:v1 \
+$ docker run --log-driver=teragrep/dkr_01:v1 \
     --log-opt relpHostname=127.0.0.1 \
     --log-opt relpPort=1234 \
     --log-opt relpTls=false
