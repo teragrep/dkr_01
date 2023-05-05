@@ -15,18 +15,18 @@ These can be modified via the `--log-opt KEY=VALUE` command-line argument when u
 In git root, run:
 [,bash]
 ----
-$ cd plugin && chmod +rwx ./plugin-build && make all
+$ chmod +x build.sh && bash build.sh
 ----
 Will make the plugin and enable it. You can check if it was successful with the `docker plugin ls` command.
 The plugin's logs can be accessed from the `/run/docker/plugins/<id>/` folder.
 
 == Running the plugin with a container
 
-To attach the log driver to a container, run the container with the `--log-driver:teragrep/dkr_01:v1` parameter.
+To attach the log driver to a container, run the container with the `--log-driver=teragrep/dkr_01:v1` parameter.
 [,bash]
 ----
-$ docker run --log-driver:teragrep/dkr_01:v1 \
-    --log-opt relpHostname=1.2.3.4 \
+$ docker run --log-driver=teragrep/dkr_01:v1 \
+    --log-opt relpHostname=127.0.0.1 \
     --log-opt relpPort=1234 \
     --log-opt relpTls=false
 ----
@@ -39,7 +39,7 @@ If using the `docker-compose` command, you can customize the `docker-compose.yam
 x-logging:
     &default-logging
     options:
-        relpHostname: "1.2.3.4"
+        relpHostname: "127.0.0.1"
         relpPort: "1601"
     driver: teragrep/dkr_01:v1
 services:
