@@ -172,13 +172,33 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 }
 
 func (d *Driver) StopLogging(file string) error {
+	// Check for panics after finishing this StopLogging() method
+	// And if a panic happened, delete file from "logs" map and force disconnect.
+	// Also remember to unlock the blocking lock
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "Recovered from panic: %v\n", r)
+			lg, ok := d.logs[file]
+			if ok {
+				lg.relpConn.TearDown()
+				delete(d.logs, file)
+			}
+			d.mu.Unlock() // this is needed since the unlock did not happen if panic on Disconnect method
+		}
+	}()
+
+	// Normal StopLogging() flow starts here by locking
 	d.mu.Lock()
 
+	// Get current logger
 	lg, ok := d.logs[file]
 	if ok {
+		// close stream
 		if err := lg.stream.Close(); err != nil {
 			return err
 		}
+		// disconnect from relp server
+		// Note: This may panic: the above defer func is used to recover from that panic!
 		ok := lg.relpConn.Disconnect()
 		if !ok {
 			fmt.Fprintln(os.Stderr, "Could not disconnect gracefully, forcing")
@@ -187,6 +207,7 @@ func (d *Driver) StopLogging(file string) error {
 		delete(d.logs, file)
 	}
 
+	// remember to unlock, otherwise new containers can't use this driver!!
 	d.mu.Unlock()
 	return nil
 }
