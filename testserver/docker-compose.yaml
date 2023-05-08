@@ -4,9 +4,15 @@ x-logging:
   options:
     relpHostname: "127.0.0.1"
     relpPort: "1601"
-    tags: "off"
+    tags: "full"
     syslogHostname: "custom_hostname"
     syslogAppName: "custom_app_name"
+    k8sMetadata: "true"
+    kubeletUrl: "http://localhost:10750"
+    k8sClientAuthEnabled: "false"
+    k8sServerCertValidationEnabled: "false"
+    k8sMetadataRefreshEnabled: "true"
+    k8sMetadataRefreshInterval: "0"
   driver: teragrep/dkr_01:v1
 services:
   test:

@@ -9,6 +9,18 @@ These can be modified via the `--log-opt KEY=VALUE` command-line argument when u
 * relpHostname = ip address
 * relpPort = port number
 * relpTls = "true" or "false"
+* syslogHostname = used for hostname in the syslog message, otherwise actual system hostname
+* syslogAppName = used for app name in the syslog message, otherwise "teragrep"
+* tags = "off", "minimal" or "full", sets additional structured data based on docker log tags
+* k8sMetadata = "true" or "false", fetch kubernetes metadata from specified address
+* kubeletUrl = "https://xxx:12345", provide kubelet address for kubernetes metadata
+* k8sClientAuthEnabled = "true" or "false"
+* k8sClientAuthCertPath = "..."
+* k8sClientAuthKeyPath = "..."
+* k8sServerCertValidationEnabled = "true" or "false"
+* k8sServerCertPath = "..."
+* k8sMetadataRefreshInterval = "0" in seconds
+* k8sMetadataRefreshEnabled = "true" or "false"
 
 == Building the plugin
 
