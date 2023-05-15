@@ -30,18 +30,17 @@ func (kapi *KubernetesAPI) FetchData() error {
 	// client certs
 	if kapi.clientAuthEnabled {
 		if _, err := os.Stat(kapi.clientCertPath); err == nil {
-			// client cert path exists
+			//client cert path exists
 			if _, err2 := os.Stat(kapi.clientKeyPath); err2 == nil {
-				// client key path exists
+				//client key path exists
 			} else {
-				// client key path doesn't exist
-				return errors.New("client key path doesn't exist: '" + kapi.clientKeyPath + "'")
+				//client key path doesn't exist
+				return errors.New("client key path doesn't exist: '" + kapi.clientKeyPath + "'\n" + err2.Error())
 			}
 		} else {
-			// client cert path doesn't exist
-			return errors.New("client cert path doesn't exist: '" + kapi.clientCertPath + "'")
+			//client cert path doesn't exist
+			return errors.New("client cert path doesn't exist: '" + kapi.clientCertPath + "'\n" + err.Error())
 		}
-
 		cert, err := tls.LoadX509KeyPair(kapi.clientCertPath, kapi.clientKeyPath)
 		if err != nil {
 			return err
@@ -57,14 +56,19 @@ func (kapi *KubernetesAPI) FetchData() error {
 				return err
 			}
 			caCertPool := x509.NewCertPool()
-			caCertPool.AppendCertsFromPEM(caCert)
+			ok := caCertPool.AppendCertsFromPEM(caCert)
 
-			tlsConfig.RootCAs = caCertPool
-
+			if ok {
+				tlsConfig.RootCAs = caCertPool
+			} else {
+				return errors.New("AppendCertsFromPEM returned not ok")
+			}
 		} else {
 			return errors.New("Server cert path pointed to a file that does not exist: '" + kapi.serverCertPath + "'")
 		}
 
+	} else {
+		tlsConfig.InsecureSkipVerify = true
 	}
 
 	// set tls config

@@ -6,21 +6,21 @@ Docker Logging Driver Plugin. Sends the Docker container's logs to the specified
 == Logging options
 These can be modified via the `--log-opt KEY=VALUE` command-line argument when using `docker run`.
 
-* relpHostname = ip address
-* relpPort = port number
-* relpTls = "true" or "false"
+* relpHostname = ip address (default: 127.0.0.1)
+* relpPort = port number (default: 1601)
+* relpTls = "true" or "false" (default: false)
 * syslogHostname = used for hostname in the syslog message, otherwise actual system hostname
 * syslogAppName = used for app name in the syslog message, otherwise "teragrep"
-* tags = "off", "minimal" or "full", sets additional structured data based on docker log tags
-* k8sMetadata = "true" or "false", fetch kubernetes metadata from specified address
-* kubeletUrl = "https://xxx:12345", provide kubelet address for kubernetes metadata
-* k8sClientAuthEnabled = "true" or "false"
-* k8sClientAuthCertPath = "..."
-* k8sClientAuthKeyPath = "..."
-* k8sServerCertValidationEnabled = "true" or "false"
-* k8sServerCertPath = "..."
-* k8sMetadataRefreshInterval = "0" in seconds
-* k8sMetadataRefreshEnabled = "true" or "false"
+* tags = "off", "minimal" or "full", sets additional structured data based on docker log tags (default: off)
+* k8sMetadata = "true" or "false", fetch kubernetes metadata from specified address (default: false)
+* kubeletUrl = "https://xxx:12345", provide kubelet address for kubernetes metadata (default: https://minikube:10250)
+* k8sClientAuthEnabled = "true" or "false" (default: true)
+* k8sClientAuthCertPath = "..." (default: /var/lib/minikube/certs/apiserver-kubelet-client.crt)
+* k8sClientAuthKeyPath = "..." (default: /var/lib/minikube/certs/apiserver-kubelet-client.key)
+* k8sServerCertValidationEnabled = "true" or "false" (default: false)
+* k8sServerCertPath = "..." (default: none)
+* k8sMetadataRefreshInterval = "0" in seconds (default: 0)
+* k8sMetadataRefreshEnabled = "true" or "false" (default: false)
 
 == Building the plugin
 
