@@ -8,5 +8,13 @@
   },
   "Network": {
     "Type": "host"
-  }
+  },
+  "Mounts": [
+    {
+      "destination": "/var/lib/minikube/certs",
+      "source": "/var/lib/minikube/certs",
+      "type": "none",
+      "options": ["rbind","ro"]
+    }
+  ]
 }

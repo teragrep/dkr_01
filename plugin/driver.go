@@ -148,13 +148,13 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 		}
 	}
 
-	kubeletUrl := "https://localhost:10250"
+	kubeletUrl := "https://minikube:10250"
 	v, ok = logCtx.Config[KUBELET_URL_OPT]
 	if ok {
 		kubeletUrl = v
 	}
 
-	kubernetesClientAuthEnabled := false
+	kubernetesClientAuthEnabled := true
 	v, ok = logCtx.Config[K8S_CLIENT_AUTH_ENABLED_OPT]
 	if ok {
 		if v == "true" || v == "True" || v == "TRUE" {
@@ -162,13 +162,13 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 		}
 	}
 
-	kubernetesClientAuthCertPath := ""
+	kubernetesClientAuthCertPath := "/var/lib/minikube/certs/apiserver-kubelet-client.crt"
 	v, ok = logCtx.Config[K8S_CLIENT_AUTH_CERT_LOCATION_OPT]
 	if ok {
 		kubernetesClientAuthCertPath = v
 	}
 
-	kubernetesClientAuthKeyPath := ""
+	kubernetesClientAuthKeyPath := "/var/lib/minikube/certs/apiserver-kubelet-client.key"
 	v, ok = logCtx.Config[K8S_CLIENT_AUTH_KEY_LOCATION_OPT]
 	if ok {
 		kubernetesClientAuthKeyPath = v
@@ -411,6 +411,9 @@ func consumeLog(lg *logPair) {
 				err := getKubernetesData(lg)
 				if err == nil {
 					lg.lastKubernetesMetadataRefresh = time.Now().Unix()
+				} else {
+					// error getting kubernetes data
+					fmt.Fprintf(os.Stderr, "Error fetching kapi data: %s\n", err.Error())
 				}
 
 			} else if lg.kubernetesMetadataRefreshEnabled {
@@ -423,6 +426,9 @@ func consumeLog(lg *logPair) {
 					err := getKubernetesData(lg)
 					if err == nil {
 						lg.lastKubernetesMetadataRefresh = time.Now().Unix()
+					} else {
+						// error getting kubernetes data
+						fmt.Fprintf(os.Stderr, "Error fetching kapi data: %s\n", err.Error())
 					}
 				}
 			}

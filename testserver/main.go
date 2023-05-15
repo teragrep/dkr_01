@@ -17,10 +17,10 @@ func main() {
 		fmt.Fprintf(w, "echo %v", r.URL.Path)
 	})
 
-	var port string
-	if port = os.Getenv("HTTP_PORT"); port == "" {
+	var port string = "9003"
+	/*if port = os.Getenv("HTTP_PORT"); port == "" {
 		port = "9000"
-	}
+	}*/
 
 	log.Printf("[TestServer] Start server on %v %v", "localhost", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
