@@ -6,21 +6,87 @@ Docker Logging Driver Plugin. Sends the Docker container's logs to the specified
 == Logging options
 These can be modified via the `--log-opt KEY=VALUE` command-line argument when using `docker run`.
 
-* relpHostname = ip address (default: 127.0.0.1)
-* relpPort = port number (default: 1601)
-* relpTls = "true" or "false" (default: false)
-* syslogHostname = used for hostname in the syslog message, otherwise actual system hostname
-* syslogAppName = used for app name in the syslog message, otherwise "teragrep"
-* tags = "off", "minimal" or "full", sets additional structured data based on docker log tags (default: off)
-* k8sMetadata = "true" or "false", fetch kubernetes metadata from specified address (default: false)
-* kubeletUrl = "https://xxx:12345", provide kubelet address for kubernetes metadata (default: https://minikube:10250)
-* k8sClientAuthEnabled = "true" or "false" (default: true)
-* k8sClientAuthCertPath = "..." (default: /var/lib/minikube/certs/apiserver-kubelet-client.crt)
-* k8sClientAuthKeyPath = "..." (default: /var/lib/minikube/certs/apiserver-kubelet-client.key)
-* k8sServerCertValidationEnabled = "true" or "false" (default: false)
-* k8sServerCertPath = "..." (default: none)
-* k8sMetadataRefreshInterval = "0" in seconds (default: 0)
-* k8sMetadataRefreshEnabled = "true" or "false" (default: false)
+|===
+|Log option |Description |Default value| Possible values
+
+|relpHostname
+|Set the RELP server's hostname
+|127.0.0.1
+|any IP address
+
+|relpPort
+|Set the RELP server's port
+|1601
+|any valid port
+
+|relpTls
+|Use TLS connection instead of unencrypted to RELP server
+|false
+|true OR false
+
+|syslogHostname
+|Hostname in syslog message
+|Actual hostname
+|any string
+
+|syslogAppName
+|App name in syslog message
+|teragrep
+|any string
+
+|tags
+|View docker info in "dkr_01@48577" structured data
+|off
+|off, minimal OR full
+
+|k8sMetadata
+|Enrich syslog message with dkr_01_k8s@48577 structured data containing kubernetes metadata
+|false
+|true OR false
+
+|kubeletUrl
+|URL used to connect to the kubernetes metadata API
+|`https://minikube:10250`
+|any valid URL
+
+|k8sClientAuthEnabled
+|Authenticate the client for Kubernetes metadata
+|true
+|true OR false
+
+|k8sClientAuthCertPath
+|Path for the client.crt file for kubernetes metadata, must be accessible
+ from the mount specified in `./plugin/config.json`
+|`/var/lib/minikube/certs/apiserver-kubelet-client.crt`
+|valid path for PEM cert
+
+|k8sClientAuthKeyPath
+|Path for the client.key file for kubernetes metadata, must be accessible
+from the mount specified in `./plugin/config.json`
+|`/var/lib/minikube/certs/apiserver-kubelet-client.key`
+|valid path for PEM key
+
+|k8sServerCertValidationEnabled
+|Validate the server certificate
+|false
+|true OR false
+
+|k8sServerCertPath
+|Path for the server certificate, must be accessible
+from the mount specified in `./plugin/config.json`
+|(empty)
+|valid path for cert
+
+|k8sMetadataRefreshInterval
+|Metadata refresh interval in seconds, 0 is always.
+|0
+|valid positive integer (>=0)
+
+|k8sMetadataRefreshEnabled
+|Enable data refresh more than once in the beginning
+|false
+|true OR false
+|===
 
 == Building the plugin
 
