@@ -55,6 +55,7 @@ type logPair struct {
 	kubernetesMetadataRefreshInterval     int64
 	lastKubernetesMetadataRefresh         int64
 	kapi                                  KubernetesAPI
+	sequenceNumber                        uint64
 }
 
 func (lg *logPair) Close() {
@@ -227,6 +228,7 @@ func (d *Driver) StartLogging(file string, logCtx logger.Info) error {
 		kubernetesMetadataRefreshEnabled:      kubernetesMetadataRefreshEnabled,
 		kubernetesMetadataRefreshInterval:     kubernetesMetadataRefreshInterval,
 		lastKubernetesMetadataRefresh:         -1,
+		sequenceNumber:                        0,
 	}
 
 	// relp connection for log pair
@@ -330,7 +332,7 @@ func consumeLog(lg *logPair) {
 		currentRetries = 0
 
 		// Write message to RELP server
-		fmt.Fprintln(os.Stdout, fmt.Sprintf("%s: [%s] [%d] %s", lg.info.ContainerID, buf.Source, buf.TimeNano, buf.Line))
+		// fmt.Fprintln(os.Stdout, fmt.Sprintf("%s: [%s] [%d] %s", lg.info.ContainerID, buf.Source, buf.TimeNano, buf.Line))
 
 		batch := RelpBatch.RelpBatch{}
 		batch.Init()
@@ -342,6 +344,14 @@ func consumeLog(lg *logPair) {
 		syslogMsg.SetTimestamp(time.Unix(0, buf.TimeNano).Format(time.RFC3339))
 		syslogMsg.SetPriority(4)
 		syslogMsg.SetVersion(1)
+		// sequence number for each logPair
+		syslogMsg.SetParameter("dkr_01@48577", "seqNum", fmt.Sprintf("%d", lg.sequenceNumber))
+		if lg.sequenceNumber >= 999_999_999 {
+			// max 999 999 999; reset back to zero
+			lg.sequenceNumber = 0
+		} else {
+			lg.sequenceNumber++
+		}
 
 		// hostname
 		if lg.hostname != "" {
