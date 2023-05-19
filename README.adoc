@@ -61,3 +61,94 @@ services:
             dockerfile: Dockerfile
         logging: *default-logging
 ----
+
+== Using in Minikube
+
+To build and use the plugin in Minikube, follow the instructions below.
+
+* Start your Minikube environment with
+
+[,bash]
+----
+$ minikube start
+----
+
+* Eval the docker-env to in your host machine's terminal
+
+[,bash]
+----
+[host]$ eval $(minikube -p minikube docker-env)
+----
+
+* Build the plugin
+
+[,bash]
+----
+[host]$ chmod +x build.sh && bash build.sh
+----
+
+* If necessary, build the test server
+
+[,bash]
+----
+[host]$ cd testserver && docker build . -t testserver:latest --no-cache
+----
+
+* SSH to the minikube
+
+[,bash]
+----
+[host]$ minikube ssh
+----
+
+* You need to add the log driver into the dockerd launch command in the `docker.service` file
+
+[,bash]
+----
+[minikube]$ sudo vi /lib/systemd/system/docker.service
+----
+
+Change the line "ExecStart=" to contain the `--log-driver=teragrep/dkr_01:v1` option and any possible
+log opts.
+
+* Reload the daemon, restart docker service and restart kubelet to save these changes.
+
+[,bash]
+----
+[minikube]$ sudo systemctl daemon-reload
+[minikube]$ sudo service docker restart
+[minikube]$ sudo systemctl restart kubelet
+----
+
+* You can check if the logging driver is functioning with the command below in minikube ssh terminal:
+
+[,bash]
+----
+[minikube]$ docker info | grep -i "logging driver"
+----
+
+It should display dkr_01 instead of the default jsonfile logging driver, if the plugin
+has been loaded correctly.
+
+If you built the test server, you can run it with (in your host machine terminal):
+
+[,bash]
+----
+[host]$ kubectl run dkrpod --image=testserver:latest --image-pull-policy=Never --restart=Never
+----
+
+To print logs, you can use the pod's terminal and curl
+
+[,bash]
+----
+[host]$ kubectl exec -i -t dkrpod -- /bin/bash
+----
+
+and enter
+
+[,bash]
+----
+[testserver-pod]$ curl localhost:9003/foobar
+----
+
+to generate log output in the testserver pod.
