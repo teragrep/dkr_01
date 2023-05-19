@@ -66,11 +66,15 @@ services:
 
 To build and use the plugin in Minikube, follow the instructions below.
 
+(Note: In the commands below, `[host]$` means that the command should be run in the
+host machine's terminal, `[minikube]$` means that it should be run in minikube ssh, and
+`[testserver-pod]$` means that it should be run in the pod's terminal.)
+
 * Start your Minikube environment with
 
 [,bash]
 ----
-$ minikube start
+[host]$ minikube start
 ----
 
 * Eval the docker-env to in your host machine's terminal
