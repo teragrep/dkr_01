@@ -4,13 +4,14 @@ go 1.19
 
 require (
 	github.com/containerd/fifo v1.1.0
-	github.com/docker/docker v23.0.5+incompatible
+	github.com/docker/docker v24.0.7+incompatible
 	github.com/gogo/protobuf v1.3.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
 )
 
 require (
+	github.com/observiq/go-syslog v1.0.1
 	github.com/teragrep/dkr_02 v0.0.0-20230427065104-0546035773bd
 	github.com/teragrep/rlp_05 v0.0.0-20230406124932-8433a16a0259
 )
@@ -21,6 +22,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e // indirect
+	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -28,7 +30,6 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/observiq/go-syslog v1.0.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/prometheus/client_golang v1.11.1 // indirect
