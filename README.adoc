@@ -2,7 +2,6 @@
 
 Docker Logging Driver Plugin. Sends the Docker container's logs to the specified RELP server.
 
-
 == Logging options
 These can be modified via the `--log-opt KEY=VALUE` command-line argument when using `docker run`.
 
@@ -137,42 +136,42 @@ host machine's terminal, `[minikube]$` means that it should be run in minikube s
 `[testserver-pod]$` means that it should be run in the pod's terminal.)
 
 * Start your Minikube environment with
-
++
 [,bash]
 ----
 [host]$ minikube start
 ----
 
 * Eval the docker-env to in your host machine's terminal
-
++
 [,bash]
 ----
 [host]$ eval $(minikube -p minikube docker-env)
 ----
 
 * Build the plugin
-
++
 [,bash]
 ----
 [host]$ chmod +x build.sh && bash build.sh
 ----
 
 * If necessary, build the test server
-
++
 [,bash]
 ----
 [host]$ cd testserver && docker build . -t testserver:latest --no-cache
 ----
 
 * SSH to the minikube
-
++
 [,bash]
 ----
 [host]$ minikube ssh
 ----
 
 * You need to add the log driver into the dockerd launch command in the `docker.service` file
-
++
 [,bash]
 ----
 [minikube]$ sudo vi /lib/systemd/system/docker.service
@@ -182,7 +181,7 @@ Change the line "ExecStart=" to contain the `--log-driver=teragrep/dkr_01:v1` op
 log opts.
 
 * Reload the daemon, restart docker service and restart kubelet to save these changes.
-
++
 [,bash]
 ----
 [minikube]$ sudo systemctl daemon-reload
@@ -191,7 +190,7 @@ log opts.
 ----
 
 * You can check if the logging driver is functioning with the command below in minikube ssh terminal:
-
++
 [,bash]
 ----
 [minikube]$ docker info | grep -i "logging driver"
@@ -222,3 +221,24 @@ and enter
 ----
 
 to generate log output in the testserver pod.
+
+== Contributing
+ 
+// Change the repository name in the issues link to match with your project's name
+ 
+You can involve yourself with our project by https://github.com/teragrep/dkr_01/issues/new/choose[opening an issue] or submitting a pull request.
+ 
+Contribution requirements:
+ 
+. *All changes must be accompanied by a new or changed test.* If you think testing is not required in your pull request, include a sufficient explanation as why you think so.
+. Security checks must pass
+. Pull requests must align with the principles and http://www.extremeprogramming.org/values.html[values] of extreme programming.
+. Pull requests must follow the principles of Object Thinking and Elegant Objects (EO).
+ 
+Read more in our https://github.com/teragrep/teragrep/blob/main/contributing.adoc[Contributing Guideline].
+ 
+=== Contributor License Agreement
+ 
+Contributors must sign https://github.com/teragrep/teragrep/blob/main/cla.adoc[Teragrep Contributor License Agreement] before a pull request is accepted to organization's repositories.
+ 
+You need to submit the CLA only once. After submitting the CLA you can contribute to all Teragrep's repositories. 
