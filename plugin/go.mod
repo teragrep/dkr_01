@@ -11,6 +11,7 @@ require (
 )
 
 require (
+	github.com/observiq/go-syslog v1.0.1
 	github.com/teragrep/dkr_02 v0.0.0-20230427065104-0546035773bd
 	github.com/teragrep/rlp_05 v0.0.0-20230406124932-8433a16a0259
 )
@@ -28,7 +29,6 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/observiq/go-syslog v1.0.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/prometheus/client_golang v1.11.1 // indirect
@@ -37,8 +37,8 @@ require (
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/rootless-containers/rootlesskit v1.1.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/protobuf v1.26.0-rc.1 // indirect
